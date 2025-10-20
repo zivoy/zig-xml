@@ -1,0 +1,24 @@
+.{
+    .name = .zig_xml,
+    .version = "1.0.0",
+    .fingerprint = 0x8c46bb51449a5f64,
+    .minimum_zig_version = "0.15.0",
+    .dependencies = .{
+        .tracer = .{
+            .url = "git+https://github.com/zivoy/zig-tracer#776c1c3feaa8fd0da33c82e111a8cc33d808e9da",
+            .hash = "zig_tracer-1.0.0-sqmb_-I2AADFEkvneabIZBRKl58Px_yvOsL0x9dGru_0",
+            // .path = "../zig-tracer/",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+
+        "mod.zig",
+        "Parser.zig",
+        "test.zig",
+
+        "LICENSE",
+        "README.md",
+    },
+}
