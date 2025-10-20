@@ -126,9 +126,11 @@ test { try doValid("xml-test-suite/xmlconf/xmltest/valid/sa/119.xml"); }
 // zig fmt: on
 
 fn doValid(testfile_path: string) !void {
-    var testfile_file = try std.fs.cwd().openFile(testfile_path, .{});
+    var testfile_file = try std.fs.cwd().openFile(testfile_path, .{ .mode = .read_only });
     defer testfile_file.close();
-    var doc = try xml.parse(std.testing.allocator, testfile_path, testfile_file.reader());
+    var buf: [4096]u8 = undefined;
+    var file_reader = testfile_file.reader(&buf);
+    var doc = try xml.parse(std.testing.allocator, testfile_path, &file_reader.interface);
     defer doc.deinit();
 }
 
@@ -145,8 +147,8 @@ test {
         \\  <book title="The Lightning Thief: Percy Jackson and the Olympians" author="Rick Riordan"></book>
         \\</category>
     ;
-    var fbs = std.io.fixedBufferStream(input);
-    var doc = try xml.parse(std.testing.allocator, "<stdin>", fbs.reader());
+    var fbs = std.Io.Reader.fixed(input);
+    var doc = try xml.parse(std.testing.allocator, "<stdin>", &fbs);
     defer doc.deinit();
     doc.acquire();
     defer doc.release();

@@ -3,7 +3,7 @@ const string = []const u8;
 const Parser = @This();
 const xml = @import("./mod.zig");
 
-any: std.io.AnyReader,
+any: *std.Io.Reader,
 allocator: std.mem.Allocator,
 temp: std.ArrayListUnmanaged(u8) = .{},
 idx: usize = 0,
@@ -41,10 +41,11 @@ pub fn peekAmt(p: *Parser, comptime amt: usize) !?void {
     const diff_amt = amt - p.avail();
     std.debug.assert(diff_amt <= buf_size);
     var buf: [buf_size]u8 = undefined;
-    const len = try p.any.readAll(&buf);
+    var in = std.Io.Writer.fixed(&buf);
+    const len = try p.any.streamRemaining(&in);
     if (len == 0) p.end = true;
     if (len == 0) return null;
-    try p.temp.appendSlice(p.allocator, buf[0..len]);
+    try p.temp.appendSlice(p.allocator, in.buffered());
     if (amt > len) return null;
 }
 

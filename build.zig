@@ -1,19 +1,32 @@
 const std = @import("std");
-const deps = @import("./deps.zig");
+// const deps = @import("./deps.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.option(std.builtin.Mode, "mode", "") orelse .Debug;
+    const mode = b.option(std.builtin.OptimizeMode, "mode", "") orelse .Debug;
     const disable_llvm = b.option(bool, "disable_llvm", "use the non-llvm zig codegen") orelse false;
+
+    const tracer = b.dependency("tracer", .{ .mode = mode });
+
+    const mod = b.addModule("xml", .{
+        .root_source_file = b.path("mod.zig"),
+        .target = target,
+        .optimize = mode,
+    });
+    mod.addImport("tracer", tracer.module("tracer"));
 
     {
         const exe = b.addExecutable(.{
             .name = "bench",
-            .root_source_file = b.path("main.zig"),
-            .target = target,
-            .optimize = mode,
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("main.zig"),
+                .target = target,
+                .optimize = mode,
+                .imports = &.{
+                    .{ .name = "xml", .module = mod },
+                },
+            }),
         });
-        deps.addAllTo(exe);
         exe.use_llvm = !disable_llvm;
         exe.use_lld = !disable_llvm;
         exe.linkLibC();
@@ -28,11 +41,16 @@ pub fn build(b: *std.Build) void {
     }
 
     const unit_tests = b.addTest(.{
-        .root_source_file = b.path("test.zig"),
-        .target = target,
-        .optimize = mode,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("test.zig"),
+            .target = target,
+            .optimize = mode,
+
+            .imports = &.{
+                .{ .name = "xml", .module = mod },
+            },
+        }),
     });
-    deps.addAllTo(unit_tests);
     unit_tests.use_llvm = !disable_llvm;
     unit_tests.use_lld = !disable_llvm;
 
